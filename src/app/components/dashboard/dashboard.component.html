@@ -1,4 +1,6 @@
 <p>
-    {{results}}
+    @for(news of results; track $index){
+        {{news.news_title}} 
+    }
     
 </p>

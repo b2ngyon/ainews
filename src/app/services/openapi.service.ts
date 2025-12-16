@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, OnInit, Version } from '@angular/core';
 import { NewsItem } from '../model/interface';
+import { MainService } from './main.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,7 +10,7 @@ export class OpenapiService{
 
   newsList : NewsItem[] = []; 
   error:string='';
-  constructor(private httpClient:HttpClient) { }
+  constructor(private httpClient:HttpClient, private mainService:MainService) { }
 
 
   private openApikey = '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';
@@ -33,7 +34,7 @@ export class OpenapiService{
 private openAiUrl = 'https://api.openai.com/v1/responses';
 
 
-async getNews() : Promise<NewsItem[]>{
+async getNews() : Promise<void>{
 const requestData = {
       // model: 'gpt-5',
       // messages: [{
@@ -79,7 +80,7 @@ const requestData = {
     });
     // console.log(this.error);
      
-    return this.newsList;
+   this.mainService.setCurrentNews(this.newsList);
 }
 
 }
