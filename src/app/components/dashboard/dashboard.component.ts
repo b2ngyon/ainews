@@ -17,9 +17,14 @@ constructor(private aiService:OpenapiService,private mainService:MainService){}
   results :NewsItem[] = [];
 
   async ngOnInit(): Promise<void> {
-   await this.aiService.getNews();
+    this.aiService.getNews();
    this.mainService.currentNews.subscribe(news => this.results = news);
-   console.log(this.results);
+  
+
+     setInterval(() => {
+     this.aiService.getNews();
+      console.log(this.results);
+    }, 60000);
   }
 
 }

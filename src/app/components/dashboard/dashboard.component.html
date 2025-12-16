@@ -1,6 +1,13 @@
-<p>
+<h3>Latest CyberSec News</h3>
     @for(news of results; track $index){
-        {{news.news_title}} 
+        <div class="card">
+            <p>Title: {{news.news_title}}</p>
+            <p>News Summary: {{news.summary}}</p>
+            <p>Critical Level: {{news.category_level}}</p>
+            <p>Time: {{news.timestamp}}</p>
+            <p>CVE releated:{{news.cve_reference}}</p>
+            <p>Source Trusted Level:{{news.trusted_level}}</p>
+        </div>
+       
     }
     
-</p>
