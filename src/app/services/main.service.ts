@@ -1,19 +1,17 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { NewsItem } from '../model/interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MainService {
+  private currentNewsSubject = new BehaviorSubject<NewsItem[]>([]);
+  public currentNews$: Observable<NewsItem[]> = this.currentNewsSubject.asObservable();
 
-  constructor() { }
+  constructor() {}
 
- private getResults = new BehaviorSubject<NewsItem[]>([<NewsItem>{}]);
- currentNews = this.getResults.asObservable();
-
-
- setCurrentNews(news:NewsItem[]){
-  this.getResults.next(news);
- }
+  setCurrentNews(news: NewsItem[]): void {
+    this.currentNewsSubject.next(news);
+  }
 }

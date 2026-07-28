@@ -1,13 +1,36 @@
-<h3>Latest CyberSec News</h3>
-    @for(news of results; track $index){
-        <div class="card">
-            <p>Title: {{news.news_title}}</p>
-            <p>News Summary: {{news.summary}}</p>
-            <p>Critical Level: {{news.category_level}}</p>
-            <p>Time: {{news.timestamp}}</p>
-            <p>CVE releated:{{news.cve_reference}}</p>
-            <p>Source Trusted Level:{{news.trusted_level}}</p>
-        </div>
-       
-    }
-    
+<div class="dashboard-container">
+  <h2>Latest CyberSec News</h2>
+
+  <div *ngIf="isLoading && newsList.length === 0" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading news...</p>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-state">
+    <p class="error-message">{{ errorMessage }}</p>
+  </div>
+
+  <div *ngIf="!isLoading && newsList.length === 0 && !errorMessage" class="empty-state">
+    <p>No news available at the moment.</p>
+  </div>
+
+  <div *ngIf="newsList.length > 0" class="news-grid">
+    <div *ngFor="let item of newsList" class="news-card">
+      <div class="card-header">
+        <h3>{{ item.title }}</h3>
+        <span [ngClass]="'severity-badge severity-' + item.severity?.toLowerCase()">
+          {{ item.severity }}
+        </span>
+      </div>
+      <p class="summary">{{ item.summary }}</p>
+      <div class="card-meta">
+        <span class="category">{{ item.category }}</span>
+        <span class="timestamp">{{ item.timestamp }}</span>
+      </div>
+      <div *ngIf="item.cve_reference" class="cve-reference">
+        CVE: {{ item.cve_reference }}
+      </div>
+      <div class="source">Source: {{ item.source_author }}</div>
+    </div>
+  </div>
+</div>

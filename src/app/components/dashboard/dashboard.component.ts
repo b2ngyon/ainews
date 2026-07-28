@@ -1,30 +1,60 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { OpenapiService } from '../../services/openapi.service';
-import { NewsItem } from '../../model/interface';
 import { MainService } from '../../services/main.service';
+import { Subject, interval } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { NewsItem } from '../../model/interface';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [],
+  imports: [CommonModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
+  newsList: NewsItem[] = [];
+  isLoading = false;
+  errorMessage: string | null = null;
 
-constructor(private aiService:OpenapiService,private mainService:MainService){}
+  private destroy$ = new Subject<void>();
 
-  results :NewsItem[] = [];
+  constructor(
+    private openapiService: OpenapiService,
+    private mainService: MainService
+  ) {}
 
-  async ngOnInit(): Promise<void> {
-    this.aiService.getNews();
-   this.mainService.currentNews.subscribe(news => this.results = news);
-  
+  ngOnInit(): void {
+    this.mainService.currentNews$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(news => {
+        this.newsList = news;
+        this.isLoading = false;
+      });
 
-     setInterval(() => {
-     this.aiService.getNews();
-      console.log(this.results);
-    }, 60000);
+    this.loadNews();
+
+    interval(60000)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.loadNews());
   }
 
+  loadNews(): void {
+    this.isLoading = true;
+    this.errorMessage = null;
+    this.openapiService.getNews();
+
+    setTimeout(() => {
+      if (this.openapiService.error) {
+        this.errorMessage = this.openapiService.error;
+        this.isLoading = false;
+      }
+    }, 5000);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 }
