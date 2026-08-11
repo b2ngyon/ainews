@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+        xmlns:content="http://purl.org/rss/1.0/modules/content/"
+        xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:atom="http://www.w3.org/2005/Atom"
+        >
+
+<channel>
+        <title>BleepingComputer</title>
+
+        <link>https://www.bleepingcomputer.com/</link>
+        <description>BleepingComputer - All Stories</description>
+        <pubDate>Wed, 29 Jul 2026 15:29:59 GMT</pubDate>
+        <generator>https://www.bleepingcomputer.com/</generator>
+        <language>en</language>
+        <atom:link href="https://www.bleepingcomputer.com/feed/" rel="self" type="application/rss+xml" />
+
+ <item>
+        <title>Hackers target over 30 Minnesota water utilities in coordinated OT attack</title>
+        <link>https://www.bleepingcomputer.com/news/security/hackers-target-over-30-minnesota-water-utilities-in-coordinated-ot-attack/</link>
+        <pubDate>Wed, 29 Jul 2026 10:55:57 -0400</pubDate>
+        <dc:creator>Ionut Ilascu</dc:creator>
+
+        <category><![CDATA[Security]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/hackers-target-over-30-minnesota-water-utilities-in-coordinated-ot-attack/</guid>
+        <description><![CDATA[The Minnesota IT Services (MNIT) agency activated its cybersecurity incident response capabilities across the entire state after hackers targeted more than 30 community water systems in "a coordinated cyberattack." [...]]]></description>
+ </item>
+<item>
+        <title>Your AI Agents Are Guessing at Scale: Permissions Decide the Damage</title>
+        <link>https://www.bleepingcomputer.com/news/security/your-ai-agents-are-guessing-at-scale-permissions-decide-the-damage/</link>
+        <pubDate>Wed, 29 Jul 2026 10:02:12 -0400</pubDate>
+        <dc:creator>Sponsored by Token Security</dc:creator>
+
+        <category><![CDATA[Security]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/your-ai-agents-are-guessing-at-scale-permissions-decide-the-damage/</guid>
+        <description><![CDATA[AI agents are designed to improvise as they complete tasks, making broad permissions a growing security risk. Token Security explains why identity, intent-based access controls, and least privilege are becoming the foundation for securing agentic AI. [...]]]></description>
+ </item>
+<item>
+        <title>Windows 11 KB5101684 update released with 42 changes and fixes</title>
+        <link>https://www.bleepingcomputer.com/news/microsoft/windows-11-kb5101684-update-released-with-42-changes-and-fixes/</link>
+        <pubDate>Wed, 29 Jul 2026 09:56:22 -0400</pubDate>
+        <dc:creator>Lawrence Abrams</dc:creator>
+
+        <category><![CDATA[Microsoft]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/microsoft/windows-11-kb5101684-update-released-with-42-changes-and-fixes/</guid>
+        <description><![CDATA[​​Microsoft has released the KB5101684 preview cumulative update for Windows 11 24H2 and 25H2, which 42 bug fixes and additional feature improvements for the operating system. [...]]]></description>
+ </item>
+<item>
+        <title>OpenAI models used Artifactory zero-days to escape to the internet</title>
+        <link>https://www.bleepingcomputer.com/news/security/openai-models-used-artifactory-zero-days-to-escape-to-the-internet/</link>
+        <pubDate>Tue, 28 Jul 2026 16:37:06 -0400</pubDate>
+        <dc:creator>Lawrence Abrams</dc:creator>
+
+        <category><![CDATA[Security]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/openai-models-used-artifactory-zero-days-to-escape-to-the-internet/</guid>
+        <description><![CDATA[JFrog has confirmed that OpenAI models exploited zero-day vulnerabilities in self-hosted Artifactory servers to help escape an isolated testing environment and gain access to the internet before attacking Hugging Face. [...]]]></description>
+ </item>
+<item>
+        <title>CISA shares advice on isolating vital systems during cyberattacks</title>
+        <link>https://www.bleepingcomputer.com/news/security/cisa-shares-advice-on-isolating-vital-systems-during-cyberattacks/</link>
+        <pubDate>Tue, 28 Jul 2026 14:41:04 -0400</pubDate>
+        <dc:creator>Lawrence Abrams</dc:creator>
+
+        <category><![CDATA[Security]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/cisa-shares-advice-on-isolating-vital-systems-during-cyberattacks/</guid>
+        <description><![CDATA[The U.S. and Australian governments have released new guidance urging critical infrastructure organizations to prepare to isolate vital operational technology systems in the event of a cyberattack or other major disruptions. [...]]]></description>
+ </item>
+<item>
+        <title>Over 24,000 exposed server BMCs leak password hash via decades-old flaw</title>
+        <link>https://www.bleepingcomputer.com/news/security/over-24-000-exposed-server-bmcs-leak-password-hash-via-decades-old-flaw/</link>
+        <pubDate>Tue, 28 Jul 2026 08:10:23 -0400</pubDate>
+        <dc:creator>Bill Toulas</dc:creator>
+
+        <category><![CDATA[Security]]></category>
+
+        <guid>https://www.bleepingcomputer.com/news/security/over-24-000-exposed-server-bmcs-leak-password-hash-via-decades-old-flaw/</guid>
+        <description><![CDATA[More than 24,000 internet-exposed servers are leaking authentication password hashes due to a 20-year-old vulnerability in their Baseboard Management Controller (BMC) interface. [...]]]></description>
+ </item>
+</channel>
+</rss>
