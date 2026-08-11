@@ -1,12 +1,12 @@
 <div class="dashboard-container">
   <h2>Latest CyberSec News</h2>
 
-  <div *ngIf="isLoading && newsList.length === 0" class="loading-state">
-    <div class="spinner"></div>
+  <div *ngIf="isLoading && newsList.length === 0" class="loading-state" role="status" aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
     <p>Loading news...</p>
   </div>
 
-  <div *ngIf="errorMessage" class="error-state">
+  <div *ngIf="errorMessage" class="error-state" role="alert">
     <p class="error-message">{{ errorMessage }}</p>
   </div>
 
@@ -18,7 +18,7 @@
     <div *ngFor="let item of newsList" class="news-card">
       <div class="card-header">
         <h3>{{ item.title }}</h3>
-        <span [ngClass]="'severity-badge severity-' + item.severity?.toLowerCase()">
+        <span [ngClass]="'severity-badge severity-' + item.severity.toLowerCase()">
           {{ item.severity }}
         </span>
       </div>

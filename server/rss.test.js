@@ -623,6 +623,63 @@ describe('enrichArticles', () => {
     });
   });
 
+  test('request body uses max_completion_tokens (never max_tokens), the configured model, json_object format, and temperature 0.2', async () => {
+    await withApiKey('test-key', async () => {
+      const originalModel = process.env.OPENAI_MODEL;
+      try {
+        process.env.OPENAI_MODEL = 'gpt-5.4-test-model';
+
+        const articles = buildArticles(2);
+        let recordedBody;
+        const post = async (url, body) => {
+          recordedBody = body;
+          return makeOpenAiResponse([]);
+        };
+
+        await enrichArticles(articles, post);
+
+        assert.ok(recordedBody, 'post should have been called with a body');
+        assert.equal(recordedBody.max_completion_tokens, 1500);
+        assert.equal('max_tokens' in recordedBody, false);
+        assert.equal(recordedBody.model, 'gpt-5.4-test-model');
+        assert.equal(recordedBody.response_format.type, 'json_object');
+        assert.equal(recordedBody.temperature, 0.2);
+      } finally {
+        if (originalModel === undefined) {
+          delete process.env.OPENAI_MODEL;
+        } else {
+          process.env.OPENAI_MODEL = originalModel;
+        }
+      }
+    });
+  });
+
+  test('falls back to model "gpt-5.4" when OPENAI_MODEL is unset', async () => {
+    await withApiKey('test-key', async () => {
+      const originalModel = process.env.OPENAI_MODEL;
+      try {
+        delete process.env.OPENAI_MODEL;
+
+        const articles = buildArticles(2);
+        let recordedBody;
+        const post = async (url, body) => {
+          recordedBody = body;
+          return makeOpenAiResponse([]);
+        };
+
+        await enrichArticles(articles, post);
+
+        assert.equal(recordedBody.model, 'gpt-5.4');
+      } finally {
+        if (originalModel === undefined) {
+          delete process.env.OPENAI_MODEL;
+        } else {
+          process.env.OPENAI_MODEL = originalModel;
+        }
+      }
+    });
+  });
+
   test('extracts a CVE reference via the local regex in degraded mode', async () => {
     await withApiKey(undefined, async () => {
       const articles = [

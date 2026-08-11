@@ -1,92 +1,81 @@
 import express from 'express';
 import cors from 'cors';
-import axios from 'axios';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { fetchNewsFromRss } from './rss.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 dotenv.config({ path: join(__dirname, '../.env') });
 
-const app = express();
 const PORT = process.env.PORT || 3000;
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
-app.use(cors({
-  origin: ['http://localhost:4200', 'http://localhost:3000'],
-  credentials: true
-}));
-app.use(express.json());
+/**
+ * Builds the Express app. `fetchNews` is injected so tests can exercise the
+ * caching / success / error paths without hitting the real RSS feeds or
+ * OpenAI API.
+ */
+export function createApp(fetchNews = fetchNewsFromRss, ttlMs = CACHE_TTL_MS) {
+  const app = express();
 
-const cache = {
-  data: null,
-  timestamp: null,
-  TTL: 5 * 60 * 1000
-};
+  app.use(cors({
+    origin: ['http://localhost:4200', 'http://localhost:3000'],
+    credentials: true
+  }));
+  app.use(express.json());
 
-app.get('/api/news', async (req, res) => {
-  try {
-    if (cache.data && Date.now() - cache.timestamp < cache.TTL) {
-      return res.json(cache.data);
+  const cache = {
+    data: null,
+    timestamp: null
+  };
+  let lastGood = null;
+
+  app.get('/api/news', async (req, res) => {
+    try {
+      if (cache.data && Date.now() - cache.timestamp < ttlMs) {
+        return res.json(cache.data);
+      }
+
+      const newsItems = await fetchNews();
+
+      cache.data = newsItems;
+      cache.timestamp = Date.now();
+      lastGood = newsItems;
+
+      res.json(newsItems);
+    } catch (error) {
+      if (lastGood) {
+        res.set('X-News-Stale', 'true');
+        return res.json(lastGood);
+      }
+
+      const message = error?.message === 'OpenAI API key not configured'
+        ? error.message
+        : 'Failed to fetch news';
+
+      res.status(500).json({
+        error: message,
+        message: error.message
+      });
     }
+  });
 
-    const openaiApiKey = process.env.OPENAI_API_KEY;
-    if (!openaiApiKey) {
-      return res.status(500).json({ error: 'OpenAI API key not configured' });
-    }
+  app.get('/health', (req, res) => {
+    res.json({ status: 'ok' });
+  });
 
-    const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'user',
-            content: `Generate exactly 5 current AI-related cybersecurity news items in JSON format. For each item, return:
-{
-  "title": "headline",
-  "summary": "brief description",
-  "severity": "Critical|High|Medium|Low",
-  "category": "Vulnerability|Threat|Incident|Research",
-  "timestamp": "2026-07-28T10:00:00Z",
-  "cve_reference": "CVE-2026-XXXXX or null",
-  "source_author": "Source Name"
+  return app;
 }
 
-Return ONLY valid JSON array, no markdown, no code blocks. Array should be wrapped as: [{"title": ..., ...}, ...]`
-          }
-        ],
-        temperature: 0.7
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${openaiApiKey}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+const isRunDirectly = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 
-    const content = response.data.choices[0].message.content;
-    const newsItems = JSON.parse(content);
-
-    cache.data = newsItems;
-    cache.timestamp = Date.now();
-
-    res.json(newsItems);
-  } catch (error) {
-    res.status(500).json({
-      error: 'Failed to fetch news',
-      message: error.message
-    });
-  }
-});
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
-
-app.listen(PORT, () => {
-  console.log(`AINews backend running on http://localhost:${PORT}`);
-  console.log(`API endpoint: http://localhost:${PORT}/api/news`);
-});
+if (isRunDirectly) {
+  const app = createApp();
+  app.listen(PORT, () => {
+    console.log(`AINews backend running on http://localhost:${PORT}`);
+    console.log(`API endpoint: http://localhost:${PORT}/api/news`);
+  });
+}

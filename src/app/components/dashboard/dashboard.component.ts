@@ -30,7 +30,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(news => {
         this.newsList = news;
-        this.isLoading = false;
+      });
+
+    this.openapiService.loading$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(loading => {
+        this.isLoading = loading;
+      });
+
+    this.openapiService.error$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(err => {
+        this.errorMessage = err;
       });
 
     this.loadNews();
@@ -41,16 +52,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   loadNews(): void {
-    this.isLoading = true;
-    this.errorMessage = null;
     this.openapiService.getNews();
-
-    setTimeout(() => {
-      if (this.openapiService.error) {
-        this.errorMessage = this.openapiService.error;
-        this.isLoading = false;
-      }
-    }, 5000);
   }
 
   ngOnDestroy(): void {
