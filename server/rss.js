@@ -75,7 +75,7 @@ export function normalizeArticle(rawItem, feedTitle) {
   const title = rawItem.title;
   if (!link || !title) return null;
 
-  const isoDate = rawItem.isoDate;
+  const isoDate = rawItem.pubDate;
   if (!isoDate) return null;
   const parsedDate = new Date(isoDate);
   if (Number.isNaN(parsedDate.getTime())) return null;
@@ -229,7 +229,7 @@ function sortByNewsTimestampDesc(a, b) {
  * exists is returned. The final list is re-sorted by date so backfilled
  * items interleave rather than being appended at the end.
  */
-export function selectArticles(articles, count = 10) {
+export function selectArticles(articles, count = 12) {
   const { ai, general } = partitionByAi(articles);
   const aiSorted = [...ai].sort(sortByNewsTimestampDesc);
   const generalSorted = [...general].sort(sortByNewsTimestampDesc);
@@ -276,6 +276,7 @@ function degradedEnrichment(article) {
 }
 
 function clampSeverity(value) {
+  console.log("enrich severities:",value)
   if (typeof value !== 'string') return 'Unknown';
   const match = SEVERITIES.find((severity) => severity.toLowerCase() === value.toLowerCase());
   return match || 'Unknown';
@@ -396,7 +397,7 @@ export async function fetchNewsFromRss(deps = {}) {
 
   const { articles: rawArticles } = await fetchFeeds(feedUrls, parser);
   const deduped = dedupeArticles(rawArticles);
-  const selected = selectArticles(deduped, 10);
+  const selected = selectArticles(deduped, 12);
   const enrichments = await enrichArticles(selected, post);
 
   const timestamp = new Date().toISOString();

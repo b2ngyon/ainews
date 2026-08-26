@@ -4,6 +4,8 @@ export interface NewsItem {
   severity: string;
   category: string;
   timestamp: string;
+  news_timestamp: string;
+  reference_link:string;
   cve_reference: string | null;
   source_author: string;
 }
