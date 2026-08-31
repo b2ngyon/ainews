@@ -42,6 +42,8 @@ testem.log
 .DS_Store
 Thumbs.db
 
+package-lock.json
+
 # Environment files - never commit secrets
 .env
 .env.*
