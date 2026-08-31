@@ -1,14 +1,22 @@
 {
   "name": "cyber-sec-news-ai",
   "version": "0.0.0",
+  "description": "AINews cybersecurity news aggregator — Angular frontend + Express API",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "ng": "ng",
-    "start": "concurrently \"ng serve\"  \"node .\\server\\index.js\"",
+    "start": "vercel dev",
+    "serve:web": "ng serve",
+    "serve:api": "node api/index.js",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:api": "node --test api/"
   },
-  "private": true,
   "dependencies": {
     "@angular/animations": "^17.0.0",
     "@angular/common": "^17.0.0",
@@ -18,8 +26,11 @@
     "@angular/platform-browser": "^17.0.0",
     "@angular/platform-browser-dynamic": "^17.0.0",
     "@angular/router": "^17.0.0",
-    "concurrent": "^0.3.2",
-    "concurrently": "^10.0.5",
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "rss-parser": "^3.13.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.2"

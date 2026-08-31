@@ -276,10 +276,26 @@ function degradedEnrichment(article) {
 }
 
 function clampSeverity(value) {
-  console.log("enrich severities:",value)
   if (typeof value !== 'string') return 'Unknown';
   const match = SEVERITIES.find((severity) => severity.toLowerCase() === value.toLowerCase());
   return match || 'Unknown';
+}
+
+function clampSeverityIndex(value) {
+  if (typeof value !== 'string') return 1;
+  'Critical', 'High', 'Medium', 'Low'
+  switch(value.toLowerCase()){
+    case 'critical':
+      return 5;
+    case 'high':
+      return 4;
+    case 'medium':
+      return 3;
+    case 'low':
+      return 2;
+    default:
+      return 1;
+  }
 }
 
 function clampCategory(value) {
@@ -378,6 +394,7 @@ export async function enrichArticles(articles, post = axios.post) {
     result[index] = {
       summary: typeof item.summary === 'string' ? truncate(item.summary, 200) : degraded[index].summary,
       severity: clampSeverity(item.severity),
+      severity_index : clampSeverityIndex(item.severity),
       category: clampCategory(item.category),
       cve_reference: cveReference,
       enriched: true,
@@ -408,6 +425,7 @@ export async function fetchNewsFromRss(deps = {}) {
       title: article.title,
       summary: enrichment.summary,
       severity: enrichment.severity,
+      severity_index: enrichment.severity_index,
       category: enrichment.category,
       timestamp,
       news_timestamp: article.news_timestamp,

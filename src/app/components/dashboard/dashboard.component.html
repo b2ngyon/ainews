@@ -31,7 +31,7 @@
         CVE: {{ item.cve_reference }}
       </div>
       <div *ngIf="item.reference_link" class="cve-reference">
-        Reference Link: {{ item.reference_link }}
+        <a href="{{item.reference_link}}">Reference Link: {{ item.reference_link }}</a> 
       </div>
       <div class="source">Source: {{ item.source_author }}</div>
     </div>

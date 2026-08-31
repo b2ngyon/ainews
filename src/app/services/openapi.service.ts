@@ -35,7 +35,9 @@ export class OpenapiService {
       )
       .subscribe(data => {
         const items = data || [];
-        console.log('Fetched news items:', items);
+        items.sort((a,b)=>
+          b.severity_index - a.severity_index
+        )
         this.newsListSubject.next(items);
         this.mainService.setCurrentNews(items);
         this.loadingSubject.next(false);

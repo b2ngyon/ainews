@@ -2,6 +2,7 @@ export interface NewsItem {
   title: string;
   summary: string;
   severity: string;
+  severity_index:number;
   category: string;
   timestamp: string;
   news_timestamp: string;

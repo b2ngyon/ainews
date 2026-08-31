@@ -1,0 +1,8 @@
+{
+  "framework": "angular",
+  "outputDirectory": "dist/cyber-sec-news-ai/browser",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}
