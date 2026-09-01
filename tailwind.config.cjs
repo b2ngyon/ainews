@@ -49,6 +49,12 @@ module.exports = {
             border: '#15803D',
           },
         },
+        star: {
+          DEFAULT: '#64748B',
+          hover: '#CBD5E1',
+          active: '#FBBF24',
+          activeHover: '#FCD34D',
+        },
         danger: {
           bg: '#450A0A',
           border: '#B91C1C',

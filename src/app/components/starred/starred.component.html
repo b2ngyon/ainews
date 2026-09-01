@@ -1,0 +1,20 @@
+<div class="dashboard-container">
+  <h2>Starred News</h2>
+
+  <div *ngIf="storageError" class="error-state" role="alert">
+    <p class="error-message">{{ storageError }}</p>
+  </div>
+
+  <div *ngIf="starredList.length === 0" class="empty-state">
+    <p>You haven't starred any news yet.</p>
+    <p>Tap the star on any article to keep it here.</p>
+  </div>
+
+  <div *ngIf="starredList.length > 0" class="news-grid">
+    <app-news-card
+      *ngFor="let item of starredList; trackBy: trackByStarKey"
+      [item]="item"
+      [starred]="true"
+    ></app-news-card>
+  </div>
+</div>

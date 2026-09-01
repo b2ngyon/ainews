@@ -15,25 +15,10 @@
   </div>
 
   <div *ngIf="newsList.length > 0" class="news-grid">
-    <div *ngFor="let item of newsList" class="news-card">
-      <div class="card-header">
-        <h3>{{ item.title }}</h3>
-        <span [ngClass]="'severity-badge severity-' + item.severity.toLowerCase()">
-          {{ item.severity }}
-        </span>
-      </div>
-      <p class="summary">{{ item.summary }}</p>
-      <div class="card-meta">
-        <span class="category">{{ item.category }}</span>
-        <span class="timestamp">{{ item.news_timestamp }}</span>
-      </div>
-      <div *ngIf="item.cve_reference" class="cve-reference">
-        CVE: {{ item.cve_reference }}
-      </div>
-      <div *ngIf="item.reference_link" class="cve-reference">
-        <a href="{{item.reference_link}}">Reference Link: {{ item.reference_link }}</a> 
-      </div>
-      <div class="source">Source: {{ item.source_author }}</div>
-    </div>
+    <app-news-card
+      *ngFor="let item of newsList; trackBy: trackByStarKey"
+      [item]="item"
+      [starred]="isStarred(item)"
+    ></app-news-card>
   </div>
 </div>

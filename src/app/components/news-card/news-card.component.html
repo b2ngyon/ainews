@@ -1,0 +1,55 @@
+<div class="news-card">
+  <div class="card-header">
+    <h3>{{ item.title }}</h3>
+    <div class="header-actions">
+      <span [ngClass]="'severity-badge severity-' + severityClass">
+        {{ item.severity || 'Unknown' }}
+      </span>
+      <button
+        type="button"
+        class="star-button"
+        [class.is-starred]="starred"
+        [attr.aria-pressed]="starred"
+        [attr.aria-label]="(starred ? 'Unstar ' : 'Star ') + item.title"
+        (click)="toggleStar()"
+      >
+        <svg
+          class="w-5 h-5"
+          viewBox="0 0 24 24"
+          [attr.fill]="starred ? 'currentColor' : 'none'"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M11.48 3.5a.56.56 0 011.04 0l2.12 4.98 5.4.46c.5.04.7.66.32.98l-4.1 3.53 1.23 5.27c.11.48-.41.86-.84.6L12 16.55l-4.65 2.77c-.43.26-.95-.12-.84-.6l1.23-5.27-4.1-3.53a.56.56 0 01.32-.98l5.4-.46 2.12-4.98z"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <p class="summary">{{ item.summary }}</p>
+
+  <div class="card-meta">
+    <span class="category">{{ item.category }}</span>
+    <time class="timestamp" [attr.datetime]="item.news_timestamp">
+      {{ item.news_timestamp | date:'d MMM y, HH:mm' }}
+    </time>
+  </div>
+
+  <div *ngIf="item.cve_reference" class="cve-reference">
+    CVE: {{ item.cve_reference }}
+  </div>
+
+  <div *ngIf="item.reference_link" class="reference-link">
+    <a [href]="item.reference_link" target="_blank" rel="noopener noreferrer">
+      Read source on {{ sourceHost }}
+      <span class="sr-only">(opens in new tab)</span>
+    </a>
+  </div>
+
+  <div class="source">Source: {{ item.source_author }}</div>
+</div>

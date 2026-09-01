@@ -1,0 +1,23 @@
+# Local build cache — 346MB, rebuilt by Vercel. This is what blows the upload limit.
+.angular
+
+# Reinstalled by Vercel from package.json
+node_modules
+
+# Built by Vercel from source
+dist
+
+# Secrets: env vars belong in Vercel project settings, never in the bundle
+.env
+.env.*
+!.env.example
+
+# Dead code: the API lives in api/ now; server/ only holds orphaned tests + stale deps
+server
+
+# Local-only
+.git
+.vscode
+.claude
+coverage
+.history

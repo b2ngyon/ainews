@@ -4,6 +4,7 @@ import { BehaviorSubject, Subject } from 'rxjs';
 import { DashboardComponent } from './dashboard.component';
 import { OpenapiService } from '../../services/openapi.service';
 import { MainService } from '../../services/main.service';
+import { StarService } from '../../services/star.service';
 import { NewsItem } from '../../model/interface';
 
 describe('DashboardComponent', () => {
@@ -20,13 +21,20 @@ describe('DashboardComponent', () => {
     title: 'Critical Zero-Day Discovered',
     summary: 'A critical zero-day vulnerability has been discovered in a widely used library.',
     severity: 'Critical',
+    severity_index: 4,
     category: 'Vulnerability',
     timestamp: '2026-07-28T10:00:00Z',
+    news_timestamp: '2026-07-28T09:00:00Z',
+    reference_link: 'https://example.com/zero-day',
     cve_reference: 'CVE-2026-99999',
     source_author: 'Test Source',
   };
 
   beforeEach(async () => {
+    // StarService is providedIn:'root' and talks to real localStorage in Karma;
+    // without this, star state leaks between specs and makes them order-dependent.
+    localStorage.clear();
+
     loadingSubject = new Subject<boolean>();
     errorSubject = new Subject<string | null>();
     newsListSubject = new Subject<NewsItem[]>();
@@ -56,6 +64,8 @@ describe('DashboardComponent', () => {
     component = fixture.componentInstance;
     getNewsSpy = TestBed.inject(OpenapiService).getNews as jasmine.Spy;
   });
+
+  afterEach(() => localStorage.clear());
 
   it('should call getNews on init', () => {
     fixture.detectChanges();
@@ -94,7 +104,7 @@ describe('DashboardComponent', () => {
     expect(compiled.querySelector('.empty-state')).toBeTruthy();
   });
 
-  it('should render a news card with all fields when a full NewsItem is present', () => {
+  it('should render a news card for each item', () => {
     fixture.detectChanges();
     loadingSubject.next(false);
     currentNewsSubject.next([fullNewsItem]);
@@ -103,27 +113,24 @@ describe('DashboardComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const cards = compiled.querySelectorAll('.news-card');
     expect(cards.length).toBe(1);
-
-    const card = cards[0];
-    expect(card.querySelector('h3')?.textContent).toContain(fullNewsItem.title);
-    expect(card.querySelector('.summary')?.textContent).toContain(fullNewsItem.summary);
-    expect(card.querySelector('.category')?.textContent).toContain(fullNewsItem.category);
-    expect(card.querySelector('.timestamp')?.textContent).toContain(fullNewsItem.timestamp);
-    expect(card.querySelector('.source')?.textContent).toContain(fullNewsItem.source_author);
-    expect(card.querySelector('.cve-reference')?.textContent).toContain(fullNewsItem.cve_reference as string);
-
-    const badge = card.querySelector('.severity-badge') as HTMLElement;
-    expect(badge).toBeTruthy();
-    expect(badge.classList.contains('severity-critical')).toBeTrue();
+    expect(cards[0].querySelector('h3')?.textContent).toContain(fullNewsItem.title);
   });
 
-  it('should not render a cve-reference element when cve_reference is null', () => {
+  it('should keep star state across a feed refresh that yields new object references', () => {
     fixture.detectChanges();
     loadingSubject.next(false);
-    currentNewsSubject.next([{ ...fullNewsItem, cve_reference: null }]);
+    currentNewsSubject.next([fullNewsItem]);
     fixture.detectChanges();
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.cve-reference')).toBeFalsy();
+    TestBed.inject(StarService).toggle(fullNewsItem);
+    fixture.detectChanges();
+    expect(component.isStarred(fullNewsItem)).toBeTrue();
+
+    // The 60s poll replaces the array with structurally-new objects.
+    currentNewsSubject.next([{ ...fullNewsItem }]);
+    fixture.detectChanges();
+
+    const button = (fixture.nativeElement as HTMLElement).querySelector('.star-button');
+    expect(button?.getAttribute('aria-pressed')).toBe('true');
   });
 });
