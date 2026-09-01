@@ -7,6 +7,29 @@ export const FEED_URLS = [
   'https://krebsonsecurity.com/feed/',
 ];
 
+/**
+ * The counts the news endpoint will serve. 50 is a deliberate ceiling, not a
+ * round number: measured live, the three feeds yield ~75 raw items with all
+ * three healthy and ~60 when BleepingComputer is Cloudflare-blocked, which it
+ * intermittently is. 50 is the largest count that survives that outage.
+ */
+export const ALLOWED_LIMITS = [12, 25, 50];
+export const DEFAULT_LIMIT = 12;
+export const MAX_LIMIT = ALLOWED_LIMITS[ALLOWED_LIMITS.length - 1];
+
+/**
+ * Snaps an arbitrary requested count onto ALLOWED_LIMITS. Anything unparseable
+ * falls back to the default; anything in between snaps up to the next allowed
+ * value; anything above the ceiling is capped. Restricting the set keeps the
+ * per-limit cache from exploding and stops a public endpoint from being used
+ * to run up an OpenAI bill one arbitrary integer at a time.
+ */
+export function resolveLimit(requested) {
+  const n = Number(requested);
+  if (!Number.isFinite(n) || n <= 0) return DEFAULT_LIMIT;
+  return ALLOWED_LIMITS.find((allowed) => n <= allowed) ?? MAX_LIMIT;
+}
+
 export const AI_KEYWORDS = [
   'ai',
   'ai agent',
@@ -305,52 +328,65 @@ function clampCategory(value) {
 }
 
 /**
- * Enriches articles via exactly one batched OpenAI call. Never throws -
- * any failure (missing key, network error, bad JSON) degrades every
- * article individually rather than aborting the whole batch.
+ * How many articles go into a single OpenAI call. The response is one JSON
+ * object covering the whole chunk, and a response that hits the token ceiling
+ * is truncated mid-JSON — which fails JSON.parse and degrades every article in
+ * the chunk, not just the overflowing one. Chunking bounds that blast radius
+ * and keeps each response comfortably inside its budget.
  */
-export async function enrichArticles(articles, post = axios.post) {
-  const degraded = articles.map(degradedEnrichment);
+export const ENRICH_CHUNK_SIZE = 20;
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey || articles.length === 0) {
-    return degraded;
+/** Measured at ~60 tokens of JSON per item; 90 leaves headroom for long titles. */
+const TOKENS_PER_ITEM = 90;
+const TOKEN_OVERHEAD = 200;
+
+const ENRICH_SYSTEM_MESSAGE = [
+  'You are a cybersecurity news editor.',
+  'You will receive a JSON array of news items, each with an index, title, description and source.',
+  'For each item, return: a summary (<=200 chars) that does NOT invent facts and does NOT alter the title;',
+  'a severity, one of Critical, High, Medium, Low;',
+  'a category, one of Vulnerability, Threat, Incident, Research;',
+  'and a cve_reference in the form CVE-YYYY-NNNNN if one is clearly referenced by the item, else null.',
+  'Return exactly one entry per input index, and never invent an index that was not provided.',
+  'Respond with ONLY strict JSON matching this shape, no markdown, no commentary:',
+  '{"items":[{"index":<int>,"summary":"<=200 chars","severity":"Critical|High|Medium|Low","category":"Vulnerability|Threat|Incident|Research","cve_reference":"CVE-YYYY-NNNNN or null"}]}',
+].join(' ');
+
+function chunkArray(items, size) {
+  const chunks = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
   }
+  return chunks;
+}
 
-  const payload = articles.map((article, index) => ({
+/**
+ * Enriches one chunk. Indices in the request and response are chunk-local, so
+ * a model that echoes a wrong index can never write into another chunk's slot.
+ * Returns a sparse array aligned to `chunk`; a null entry means "leave this one
+ * degraded". Never throws.
+ */
+async function enrichChunk(chunk, post, apiKey) {
+  const payload = chunk.map((article, index) => ({
     index,
     title: article.title,
     description: truncate(article.description || '', 400),
     source: article.source_author,
   }));
 
-  const systemMessage = [
-    'You are a cybersecurity news editor.',
-    'You will receive a JSON array of news items, each with an index, title, description and source.',
-    'For each item, return: a summary (<=200 chars) that does NOT invent facts and does NOT alter the title;',
-    'a severity, one of Critical, High, Medium, Low;',
-    'a category, one of Vulnerability, Threat, Incident, Research;',
-    'and a cve_reference in the form CVE-YYYY-NNNNN if one is clearly referenced by the item, else null.',
-    'Return exactly one entry per input index, and never invent an index that was not provided.',
-    'Respond with ONLY strict JSON matching this shape, no markdown, no commentary:',
-    '{"items":[{"index":<int>,"summary":"<=200 chars","severity":"Critical|High|Medium|Low","category":"Vulnerability|Threat|Incident|Research","cve_reference":"CVE-YYYY-NNNNN or null"}]}',
-  ].join(' ');
-
   let response;
   try {
-    global.__VERIFY_UPSTREAM_CALL_COUNT = (global.__VERIFY_UPSTREAM_CALL_COUNT || 0) + 1;
-    console.log('[VERIFY-CALL-COUNT]', global.__VERIFY_UPSTREAM_CALL_COUNT);
     response = await post(
       'https://api.openai.com/v1/chat/completions',
       {
         model: process.env.OPENAI_MODEL || 'gpt-5.4',
         messages: [
-          { role: 'system', content: systemMessage },
+          { role: 'system', content: ENRICH_SYSTEM_MESSAGE },
           { role: 'user', content: JSON.stringify(payload) },
         ],
         response_format: { type: 'json_object' },
         temperature: 0.2,
-        max_completion_tokens: 1500,
+        max_completion_tokens: chunk.length * TOKENS_PER_ITEM + TOKEN_OVERHEAD,
       },
       {
         headers: {
@@ -362,46 +398,70 @@ export async function enrichArticles(articles, post = axios.post) {
     );
   } catch (error) {
     console.warn(`[rss] OpenAI enrichment request failed: ${error?.message || error}`);
-    return degraded;
+    return chunk.map(() => null);
   }
-
-  console.log('[TEMP-USAGE-LOG]', JSON.stringify(response?.data?.usage));
 
   let parsed;
   try {
-    const content = response?.data?.choices?.[0]?.message?.content;
-    parsed = JSON.parse(content);
+    parsed = JSON.parse(response?.data?.choices?.[0]?.message?.content);
   } catch (error) {
     console.warn(`[rss] Failed to parse OpenAI enrichment response: ${error?.message || error}`);
-    return degraded;
+    return chunk.map(() => null);
   }
 
   const items = Array.isArray(parsed?.items) ? parsed.items : [];
-  const seenIndices = new Set();
-  const result = [...degraded];
+  const out = chunk.map(() => null);
+  const seen = new Set();
 
   for (const item of items) {
     const index = item?.index;
-    if (!Number.isInteger(index) || index < 0 || index >= articles.length) continue;
-    if (seenIndices.has(index)) continue;
-    seenIndices.add(index);
+    if (!Number.isInteger(index) || index < 0 || index >= chunk.length) continue;
+    if (seen.has(index)) continue;
+    seen.add(index);
 
     const cveReference =
       typeof item.cve_reference === 'string' && item.cve_reference.toLowerCase() !== 'null'
         ? item.cve_reference
         : null;
 
-    result[index] = {
-      summary: typeof item.summary === 'string' ? truncate(item.summary, 200) : degraded[index].summary,
+    out[index] = {
+      summary: typeof item.summary === 'string' ? truncate(item.summary, 200) : null,
       severity: clampSeverity(item.severity),
-      severity_index : clampSeverityIndex(item.severity),
+      severity_index: clampSeverityIndex(item.severity),
       category: clampCategory(item.category),
       cve_reference: cveReference,
       enriched: true,
     };
   }
 
-  return result;
+  return out;
+}
+
+/**
+ * Enriches articles via batched OpenAI calls, ENRICH_CHUNK_SIZE articles per
+ * call. Never throws - any failure (missing key, network error, bad JSON)
+ * degrades the affected articles individually rather than aborting the batch,
+ * and one failing chunk does not take the others down.
+ */
+export async function enrichArticles(articles, post = axios.post) {
+  const degraded = articles.map(degradedEnrichment);
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey || articles.length === 0) {
+    return degraded;
+  }
+
+  const chunks = chunkArray(articles, ENRICH_CHUNK_SIZE);
+  const results = await Promise.all(chunks.map((chunk) => enrichChunk(chunk, post, apiKey)));
+
+  const flat = results.flat();
+  return flat.map((enrichment, index) => {
+    if (!enrichment) return degraded[index];
+    return {
+      ...enrichment,
+      summary: enrichment.summary ?? degraded[index].summary,
+    };
+  });
 }
 
 /**
