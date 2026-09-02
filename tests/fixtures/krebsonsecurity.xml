@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Krebs on Security</title>
+	<atom:link href="https://krebsonsecurity.com/feed/" rel="self" type="application/rss+xml" />
+	<link>https://krebsonsecurity.com</link>
+	<description>In-depth security news and investigation</description>
+	<lastBuildDate>Wed, 22 Jul 2026 17:06:33 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.2.2</generator>
+	<item>
+		<title>LG to Ban Residential Proxies from Smart TV Apps</title>
+		<link>https://krebsonsecurity.com/2026/07/lg-to-ban-residential-proxies-from-smart-tv-apps/</link>
+					<comments>https://krebsonsecurity.com/2026/07/lg-to-ban-residential-proxies-from-smart-tv-apps/#comments</comments>
+
+		<dc:creator><![CDATA[BrianKrebs]]></dc:creator>
+		<pubDate>Wed, 22 Jul 2026 01:10:38 +0000</pubDate>
+				<category><![CDATA[A Little Sunshine]]></category>
+		<category><![CDATA[Internet of Things (IoT)]]></category>
+		<category><![CDATA[Bright Data]]></category>
+		<guid isPermaLink="false">https://krebsonsecurity.com/?p=74000</guid>
+
+					<description><![CDATA[The home appliance giant LG Electronics USA said this week it plans to suspend any apps built for its smart TVs that turn one's television into an always-on residential proxy node. The move comes less than a month after researchers found that more than 42 percent of games and other apps available for download on LG's webOS store allow unknown third-parties to route their Internet traffic through a user's TV.]]></description>
+										<content:encoded><![CDATA[<p>The home appliance giant <strong>LG Electronics USA</strong> said this week it plans to suspend any apps built for its smart TVs that turn one&#8217;s television into an always-on residential proxy node. The move comes less than a month after researchers found that more than 42 percent of games and other apps available for download on LG&#8217;s webOS store allow unknown third-parties to route their Internet traffic through a user&#8217;s TV.</p>
+<p>On July 2, we <a href="https://krebsonsecurity.com/2026/07/fbi-seizes-netnut-proxy-platform-popa-botnet/" target="_blank" rel="noopener">featured research</a> by the security firm <strong>Spur</strong> that examined the prevalence of residential proxy software development kits (SDKs) in smart TV apps.</p>
+<p><strong>Update, July 22, 1:06 p.m. ET:</strong> Added statement from Bright Data.</p>
+]]></content:encoded>
+
+					<wfw:commentRss>https://krebsonsecurity.com/2026/07/lg-to-ban-residential-proxies-from-smart-tv-apps/feed/</wfw:commentRss>
+			<slash:comments>60</slash:comments>
+
+
+			</item>
+		<item>
+		<title>Microsoft Patches a Record 570 Security Flaws</title>
+		<link>https://krebsonsecurity.com/2026/07/microsoft-patches-a-record-570-security-flaws/</link>
+					<comments>https://krebsonsecurity.com/2026/07/microsoft-patches-a-record-570-security-flaws/#comments</comments>
+
+		<dc:creator><![CDATA[BrianKrebs]]></dc:creator>
+		<pubDate>Tue, 14 Jul 2026 19:22:42 +0000</pubDate>
+				<category><![CDATA[Security Tools]]></category>
+		<category><![CDATA[CVE-2026-48561]]></category>
+		<category><![CDATA[CVE-2026-56155]]></category>
+		<guid isPermaLink="false">https://krebsonsecurity.com/?p=73991</guid>
+
+					<description><![CDATA[Microsoft Corp. today released software updates to plug at least 570 security holes in its Windows operating systems and other software, almost triple the number of vulnerabilities the software giant fixed in its record-smashing Patch Tuesday release last month. Microsoft attributed the burgeoning patch counts to vulnerability discoveries aided by artificial intelligence.]]></description>
+										<content:encoded><![CDATA[<p><strong>Microsoft Corp.</strong> today released software updates to plug at least 570 security holes in its <strong>Windows</strong> operating systems and other software. Microsoft attributed the burgeoning patch counts to vulnerability discoveries aided by artificial intelligence.</p>
+]]></content:encoded>
+
+					<wfw:commentRss>https://krebsonsecurity.com/2026/07/microsoft-patches-a-record-570-security-flaws/feed/</wfw:commentRss>
+			<slash:comments>42</slash:comments>
+
+
+			</item>
+		<item>
+		<title>Lessons Learned from CISA&#8217;s Recent GitHub Leak</title>
+		<link>https://krebsonsecurity.com/2026/07/lessons-learned-from-cisas-recent-github-leak/</link>
+					<comments>https://krebsonsecurity.com/2026/07/lessons-learned-from-cisas-recent-github-leak/#comments</comments>
+
+		<dc:creator><![CDATA[BrianKrebs]]></dc:creator>
+		<pubDate>Mon, 13 Jul 2026 15:03:28 +0000</pubDate>
+				<category><![CDATA[A Little Sunshine]]></category>
+		<category><![CDATA[Data Breaches]]></category>
+		<guid isPermaLink="false">https://krebsonsecurity.com/?p=73982</guid>
+
+					<description><![CDATA[The Cybersecurity and Infrastructure Security Agency (CISA) has issued a postmortem on a data leak in which a contractor published dozens of internal CISA credentials -- including AWS Govcloud keys -- in a public GitHub repository for almost six months before being notified by KrebsOnSecurity. Experts say the gaps identified in the agency's initial response provide important lessons that all security teams should absorb.]]></description>
+										<content:encoded><![CDATA[<p>The <strong>Cybersecurity and Infrastructure Security Agency</strong> (CISA) has issued a postmortem on a recent data leak in which a contractor published dozens of internal CISA credentials.</p>
+]]></content:encoded>
+
+					<wfw:commentRss>https://krebsonsecurity.com/2026/07/lessons-learned-from-cisas-recent-github-leak/feed/</wfw:commentRss>
+			<slash:comments>15</slash:comments>
+
+
+			</item>
+		<item>
+		<title>Felons, Fraudsters Flog Offensive Cybersecurity Startup</title>
+		<link>https://krebsonsecurity.com/2026/07/felons-fraudsters-flog-offensive-cybersecurity-startup/</link>
+					<comments>https://krebsonsecurity.com/2026/07/felons-fraudsters-flog-offensive-cybersecurity-startup/#comments</comments>
+
+		<dc:creator><![CDATA[BrianKrebs]]></dc:creator>
+		<pubDate>Wed, 08 Jul 2026 12:31:39 +0000</pubDate>
+				<category><![CDATA[A Little Sunshine]]></category>
+		<category><![CDATA[Ne'er-Do-Well News]]></category>
+		<guid isPermaLink="false">https://krebsonsecurity.com/?p=73834</guid>
+
+					<description><![CDATA[A cybersecurity startup dangling millions of dollars to acquire zero-day security vulnerabilities in popular software is run by a pair of far-right conspiracy theorists and convicted felons whose most recent ventures included fake intelligence companies and a now-defunct AI-based lobbying platform they operated under assumed names.]]></description>
+										<content:encoded><![CDATA[<p>A cybersecurity startup dangling millions of dollars to acquire zero-day security vulnerabilities in popular software.</p>
+]]></content:encoded>
+
+					<wfw:commentRss>https://krebsonsecurity.com/2026/07/felons-fraudsters-flog-offensive-cybersecurity-startup/feed/</wfw:commentRss>
+			<slash:comments>33</slash:comments>
+
+
+			</item>
+		<item>
+		<title>FBI Seizes NetNut Proxy Platform, Popa Botnet</title>
+		<link>https://krebsonsecurity.com/2026/07/fbi-seizes-netnut-proxy-platform-popa-botnet/</link>
+					<comments>https://krebsonsecurity.com/2026/07/fbi-seizes-netnut-proxy-platform-popa-botnet/#comments</comments>
+
+		<dc:creator><![CDATA[BrianKrebs]]></dc:creator>
+		<pubDate>Thu, 02 Jul 2026 19:27:33 +0000</pubDate>
+				<category><![CDATA[A Little Sunshine]]></category>
+		<category><![CDATA[Web Fraud 2.0]]></category>
+		<guid isPermaLink="false">https://krebsonsecurity.com/?p=73923</guid>
+
+					<description><![CDATA[The Federal Bureau of Investigation (FBI) said today it worked with industry partners to seize hundreds of domains associated with NetNut, a sprawling residential proxy service operated by the publicly-traded Israeli company Alarum Technologies [NASDAQ: ALAR]. The action comes roughly two weeks after KrebsOnSecurity published findings from multiple security firms connecting NetNut to the Popa botnet.]]></description>
+										<content:encoded><![CDATA[<p>The <strong>Federal Bureau of Investigation</strong> (FBI) said today it worked with industry partners to seize hundreds of domains associated with <strong>NetNut</strong>.</p>
+]]></content:encoded>
+
+					<wfw:commentRss>https://krebsonsecurity.com/2026/07/fbi-seizes-netnut-proxy-platform-popa-botnet/feed/</wfw:commentRss>
+			<slash:comments>15</slash:comments>
+
+
+			</item>
+</channel>
+</rss>

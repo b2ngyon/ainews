@@ -1,3 +1,17 @@
+/**
+ * The counts the news endpoint will serve.
+ *
+ * MUST match ALLOWED_LIMITS in api/rss.js. The backend clamps every request
+ * with resolveLimit(), so a value that drifts out of this list is not a
+ * security problem - it just silently gives the user a different count than
+ * the one the UI says is selected. count.service.spec.ts asserts the two
+ * lists agree, in the same spirit as the canonicalizeLink comment in
+ * star.service.ts.
+ */
+export const ALLOWED_LIMITS = [12, 25, 50] as const;
+export const DEFAULT_LIMIT = 12;
+export type NewsLimit = (typeof ALLOWED_LIMITS)[number];
+
 export interface NewsItem {
   title: string;
   summary: string;
@@ -9,6 +23,10 @@ export interface NewsItem {
   reference_link:string;
   cve_reference: string | null;
   source_author: string;
+  /** Set by the backend's AI keyword filter; general-news backfill is false. */
+  ai_related?: boolean;
+  /** False when OpenAI enrichment was unavailable and the item was degraded. */
+  enriched?: boolean;
 }
 
 /**

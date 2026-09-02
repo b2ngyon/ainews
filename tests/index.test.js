@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { createApp } from './index.js';
+import { createApp } from '../api/index.js';
 
 /**
  * Starts the given Express app on an ephemeral port and returns its base URL
@@ -19,13 +19,13 @@ function startServer(app) {
   });
 }
 
-describe('GET /health', () => {
+describe('GET /api/health', () => {
   test('returns 200 and status ok', async () => {
     const app = createApp(async () => []);
     const { baseUrl, close } = await startServer(app);
 
     try {
-      const res = await fetch(`${baseUrl}/health`);
+      const res = await fetch(`${baseUrl}/api/health`);
       const body = await res.json();
 
       assert.equal(res.status, 200);
@@ -106,7 +106,10 @@ describe('GET /api/news', () => {
 
       assert.equal(res.status, 500);
       assert.equal(body.error, 'Failed to fetch news');
-      assert.equal(body.message, 'boom');
+      // The raw error text must never reach a public endpoint - it is logged
+      // server-side instead. Asserting the absence is the regression guard.
+      assert.equal(body.message, 'Failed to fetch news');
+      assert.ok(!JSON.stringify(body).includes('boom'));
     } finally {
       await close();
     }
@@ -171,7 +174,8 @@ describe('GET /api/news', () => {
       assert.equal(res.status, 500);
       assert.equal(res.headers.get('x-news-stale'), null);
       assert.equal(body.error, 'Failed to fetch news');
-      assert.equal(body.message, 'never succeeded');
+      assert.equal(body.message, 'Failed to fetch news');
+      assert.ok(!JSON.stringify(body).includes('never succeeded'));
     } finally {
       await close();
     }

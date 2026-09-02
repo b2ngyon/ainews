@@ -37,7 +37,7 @@ describe('AppComponent', () => {
     fixture.detectChanges();
 
     const httpMock = TestBed.inject(HttpTestingController);
-    httpMock.expectOne(`${environment.apiUrl}/news`).flush([]);
+    httpMock.expectOne(`${environment.apiUrl}/news?limit=12`).flush([]);
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;

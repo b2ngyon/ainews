@@ -12,9 +12,17 @@
 
   <div *ngIf="starredList.length > 0" class="news-grid">
     <app-news-card
-      *ngFor="let item of starredList; trackBy: trackByStarKey"
+      *ngFor="let item of pagedStarred; trackBy: trackByStarKey"
       [item]="item"
       [starred]="true"
     ></app-news-card>
   </div>
+
+  <app-paginator
+    [total]="starredList.length"
+    [pageSize]="pageSize"
+    [page]="page"
+    label="starred articles"
+    (pageChange)="onPageChange($event)"
+  ></app-paginator>
 </div>

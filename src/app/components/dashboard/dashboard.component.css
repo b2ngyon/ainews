@@ -33,3 +33,53 @@
 .empty-state p {
   @apply text-sm;
 }
+
+.dashboard-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+}
+
+.count-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.count-label {
+  font-size: 0.875rem;
+  color: #94A3B8;
+}
+
+.count-select {
+  appearance: none;
+  padding: 0.35rem 2rem 0.35rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #2A3547;
+  background-color: #151C2C;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1rem;
+  color: #E2E8F0;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.count-select:focus-visible {
+  outline: 2px solid #2DD4BF;
+  outline-offset: 2px;
+}
+
+.stale-state {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #A16207;
+  border-radius: 0.5rem;
+  background: #422006;
+  color: #FDE047;
+  font-size: 0.875rem;
+}

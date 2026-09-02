@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "ainews-api",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["api/index.js"],
+      "port": 3000
+    },
+    {
       "name": "ainews-web",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["ng", "serve", "--port", "4200"],

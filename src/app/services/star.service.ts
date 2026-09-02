@@ -172,7 +172,9 @@ export class StarService {
       title: entry.title ?? '',
       summary: entry.summary ?? '',
       severity: entry.severity ?? 'Unknown',
-      severity_index: typeof entry.severity_index === 'number' ? entry.severity_index : 0,
+      // 1, not 0, to match clampSeverityIndex's 'Unknown' default in api/rss.js.
+      // At 0 a legacy starred item sorts below a freshly-fetched Unknown one.
+      severity_index: typeof entry.severity_index === 'number' ? entry.severity_index : 1,
       category: entry.category ?? 'News',
       timestamp: entry.timestamp ?? '',
       news_timestamp: entry.news_timestamp ?? '',

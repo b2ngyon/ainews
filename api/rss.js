@@ -98,7 +98,10 @@ export function normalizeArticle(rawItem, feedTitle) {
   const title = rawItem.title;
   if (!link || !title) return null;
 
-  const isoDate = rawItem.pubDate;
+  // isoDate is rss-parser's normalized field and is populated for Atom entries
+  // (<published>/<updated>) where pubDate can be absent; pubDate is the RFC822
+  // original. Prefer the normalized one, fall back to the raw.
+  const isoDate = rawItem.isoDate || rawItem.pubDate;
   if (!isoDate) return null;
   const parsedDate = new Date(isoDate);
   if (Number.isNaN(parsedDate.getTime())) return null;
@@ -269,6 +272,35 @@ export function selectArticles(articles, count = 12) {
   return selected;
 }
 
+/**
+ * Narrows an already-enriched NewsItem[] down to `count`, reproducing exactly
+ * the ranking selectArticles() applies: AI-related first (most recent first),
+ * backfilled with general items, then re-sorted by date.
+ *
+ * Naive `.slice(0, count)` is WRONG here and was measured to be: because
+ * selectArticles re-sorts by date AFTER backfilling, slicing a 50-item result
+ * down to 12 returned 3 AI items where a direct select(pool, 12) returns 12.
+ * That would have gutted the default dashboard view.
+ *
+ * Equivalence holds because a larger selection always contains every AI item
+ * the smaller one would have chosen: selectArticles takes AI items in date
+ * order before any backfill, so the top-N AI items of a 50-selection are the
+ * top-N AI items of the whole pool.
+ */
+export function narrowItems(items, count) {
+  if (!Array.isArray(items) || count >= items.length) return items;
+
+  const ai = items.filter((item) => item.ai_related).sort(sortByNewsTimestampDesc);
+  const general = items.filter((item) => !item.ai_related).sort(sortByNewsTimestampDesc);
+
+  let selected = ai.slice(0, count);
+  if (selected.length < count) {
+    selected = selected.concat(general.slice(0, count - selected.length));
+  }
+
+  return [...selected].sort(sortByNewsTimestampDesc);
+}
+
 function truncate(str, max) {
   if (!str) return '';
   return str.length > max ? str.slice(0, max) : str;
@@ -292,6 +324,9 @@ function degradedEnrichment(article) {
   return {
     summary: truncateAtWordBoundary(article.description || '', 200),
     severity: 'Unknown',
+    // Must match clampSeverityIndex's default. Without it the frontend sorts
+    // on undefined and every comparison against a degraded item is NaN.
+    severity_index: 1,
     category: 'News',
     cve_reference: localCveReference(article.title, article.description),
     enriched: false,
@@ -306,8 +341,7 @@ function clampSeverity(value) {
 
 function clampSeverityIndex(value) {
   if (typeof value !== 'string') return 1;
-  'Critical', 'High', 'Medium', 'Low'
-  switch(value.toLowerCase()){
+  switch (value.toLowerCase()) {
     case 'critical':
       return 5;
     case 'high':
@@ -338,7 +372,19 @@ export const ENRICH_CHUNK_SIZE = 20;
 
 /** Measured at ~60 tokens of JSON per item; 90 leaves headroom for long titles. */
 const TOKENS_PER_ITEM = 90;
-const TOKEN_OVERHEAD = 200;
+
+/**
+ * `max_completion_tokens` budgets reasoning tokens AND output tokens together
+ * on gpt-5.x. Sizing the budget to the JSON alone starves the reasoning pass,
+ * the response comes back truncated or empty, JSON.parse throws, and the whole
+ * chunk degrades - the exact failure this chunking was written to prevent.
+ * This allowance is what stops the fix from re-creating the bug.
+ */
+const REASONING_ALLOWANCE = 2000;
+
+export function enrichTokenBudget(itemCount) {
+  return itemCount * TOKENS_PER_ITEM + REASONING_ALLOWANCE;
+}
 
 const ENRICH_SYSTEM_MESSAGE = [
   'You are a cybersecurity news editor.',
@@ -386,7 +432,7 @@ async function enrichChunk(chunk, post, apiKey) {
         ],
         response_format: { type: 'json_object' },
         temperature: 0.2,
-        max_completion_tokens: chunk.length * TOKENS_PER_ITEM + TOKEN_OVERHEAD,
+        max_completion_tokens: enrichTokenBudget(chunk.length),
       },
       {
         headers: {
@@ -401,11 +447,30 @@ async function enrichChunk(chunk, post, apiKey) {
     return chunk.map(() => null);
   }
 
+  const choice = response?.data?.choices?.[0];
+  const finishReason = choice?.finish_reason;
+  const usage = response?.data?.usage;
+
+  // `length` means the budget ran out mid-JSON. Without this the truncation
+  // case is indistinguishable from the model returning prose, and the token
+  // budget above becomes undiagnosable in production.
+  if (finishReason === 'length') {
+    console.warn(
+      `[rss] OpenAI response truncated for a ${chunk.length}-item chunk ` +
+      `(budget ${enrichTokenBudget(chunk.length)}, usage ${JSON.stringify(usage)}). ` +
+      'Raise REASONING_ALLOWANCE or lower ENRICH_CHUNK_SIZE.'
+    );
+    return chunk.map(() => null);
+  }
+
   let parsed;
   try {
-    parsed = JSON.parse(response?.data?.choices?.[0]?.message?.content);
+    parsed = JSON.parse(choice?.message?.content);
   } catch (error) {
-    console.warn(`[rss] Failed to parse OpenAI enrichment response: ${error?.message || error}`);
+    console.warn(
+      `[rss] Failed to parse OpenAI enrichment response ` +
+      `(finish_reason=${finishReason}, usage=${JSON.stringify(usage)}): ${error?.message || error}`
+    );
     return chunk.map(() => null);
   }
 
@@ -470,11 +535,18 @@ export async function enrichArticles(articles, post = axios.post) {
  * sorted by `news_timestamp` descending.
  */
 export async function fetchNewsFromRss(deps = {}) {
-  const { parser = defaultParser, post = axios.post, feedUrls = FEED_URLS } = deps;
+  const {
+    parser = defaultParser,
+    post = axios.post,
+    feedUrls = FEED_URLS,
+    count = DEFAULT_LIMIT,
+  } = deps;
 
   const { articles: rawArticles } = await fetchFeeds(feedUrls, parser);
   const deduped = dedupeArticles(rawArticles);
-  const selected = selectArticles(deduped, 12);
+  // `count` is already clamped: resolveLimit runs at the route boundary in
+  // api/index.js so there is exactly one place that decides what is allowed.
+  const selected = selectArticles(deduped, count);
   const enrichments = await enrichArticles(selected, post);
 
   const timestamp = new Date().toISOString();

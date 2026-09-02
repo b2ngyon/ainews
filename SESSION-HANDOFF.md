@@ -1,120 +1,135 @@
 # AINews — Session Handoff
 
-Rewritten 2026-09-02. Disposable — delete once the next session has picked it up.
-Durable versions of everything here also live in Claude's memory and load automatically.
+Rewritten 2026-09-02 (evening). Disposable — delete once the next session has picked it up.
 
 ---
 
-## State: one file dirty, mid-change
+## State: count selector is BUILT and VERIFIED, uncommitted
 
-The previous session's 20 uncommitted files **were committed** as `c1e76c2 feature update`.
-That warning is resolved — do not go looking for it.
+Everything below is in the working tree, not committed. Last commit is `0b87b98`.
 
-The only dirty file is `api/rss.js` (+101/−41). It **passes `node --check`** but is an
-**incomplete implementation** of the count selector. Nothing is broken; nothing is finished.
+- **Backend: 72/72 passing** (`npm run test:api`) — was a suite that would not even load.
+- **Frontend: 76/76 passing** (`npx ng test --watch=false --browsers=ChromeHeadless`).
+- **`ng build` clean.**
+- **Verified live in a browser against the real feeds**, not just in tests.
 
 ---
 
-## The count selector — all four open questions are now SETTLED
+## The four settled decisions (do not reopen)
 
-Asked and answered 2026-09-02. Do not re-open these.
-
-| Question | Decision |
+| | |
 |---|---|
-| Maximum count | **50**, not 100. Selector offers **12 / 25 / 50**, default 12. |
-| Architecture | **Server-side `?limit`, client-side paging.** Per-limit cache. Page turns do not refetch. |
-| Persistence | **localStorage**, same as starring. |
-| `/starred` | **Yes, same paginator**, fixed page size. |
-
-**Why 50 and not 100:** re-measured live on 2026-09-02 —
-The Hacker News 200/50 items, **BleepingComputer 200/15 items (recovered — it was 403 yesterday)**,
-Krebs 200/10 items. ~75 raw with all three healthy, ~60 when BleepingComputer is Cloudflare-blocked
-again, which it intermittently is. 50 is the largest count that survives that outage. The user
-accepted this over the original 100.
+| Max count | **50**, not 100. Selector offers 12 / 25 / 50, default 12. |
+| Architecture | Server-side `?limit`, client-side paging. Page turns do not refetch. |
+| Persistence | `localStorage`, key `ainews.count.v1`. |
+| `/starred` | Same paginator, page size 12. |
 
 ---
 
-## What I actually changed in `api/rss.js`
+## Live verification results
 
-**1. Limit constants + `resolveLimit()`** (new exports, above `AI_KEYWORDS`)
-`ALLOWED_LIMITS = [12,25,50]`, `DEFAULT_LIMIT = 12`, `MAX_LIMIT = 50`.
-`resolveLimit(requested)` snaps an arbitrary number onto the allowed set — unparseable → 12,
-in-between → snaps up, over-ceiling → 50. Restricting the set keeps the per-limit cache bounded
-and stops a public endpoint being used to run up an OpenAI bill one arbitrary integer at a time.
+Against the real feeds on 2026-09-02:
 
-**2. `enrichArticles` rewritten to chunk** — this was a real latent bug, not a refactor.
-The old code sent the entire batch in one call with a hardcoded `max_completion_tokens: 1500`.
-At ~60 tokens of JSON per item that truncates somewhere around 20–25 items, and a truncated
-response fails `JSON.parse`, which degraded **every** article to `severity: 'Unknown'` — not just
-the overflowing one. So the feature as originally specced would have silently destroyed
-enrichment the moment anyone picked 25 or 50.
+| Request | Items returned |
+|---|---|
+| `/api/news` (no param) | 12 |
+| `?limit=12` / `?limit=25` / `?limit=50` | 12 / 25 / 50 |
+| `?limit=999` | 50 (clamped) |
+| `?limit=abc` | 12 (default) |
 
-Now: `ENRICH_CHUNK_SIZE = 20`, chunks run in parallel via `Promise.all`, budget is
-`chunk.length * 90 + 200` tokens. Indices in each request/response are **chunk-local**, so a model
-echoing a bad index cannot write into another chunk's slot. One failing chunk degrades only its
-own articles.
-
-Also removed the `[VERIFY-CALL-COUNT]` and `[TEMP-USAGE-LOG]` debug logging left over from an
-earlier session, and the now-unused `SEVERITIES`-adjacent duplicate system-message string.
+In the UI: selecting 50 gave "Showing 1–12 of 50 articles", "Page 1 of 5"; paging to the end gave
+"Showing 49–50 of 50" with 2 cards on the partial last page. **Four page turns produced zero
+`/api/news` requests.** `/starred` with 30 seeded items paged correctly and also issued no fetch.
+No console errors.
 
 ---
 
-## ⚠ Bug found and deliberately NOT fixed
+## ⚠ The local OpenAI key is dead
 
-`degradedEnrichment()` (`api/rss.js:291`) does not set `severity_index`.
-`fetchNewsFromRss` then reads `enrichment.severity_index` → `undefined`, and
-`openapi.service.ts` sorts on it → `NaN` comparisons, so unenriched items sort unpredictably.
+`[rss] OpenAI enrichment request failed: Request failed with status code 401` — twice, for a
+25-item request. Two calls is the chunking working correctly (20 + 5); the 401 is the key in
+`.env` being invalid or expired.
 
-This is **pre-existing**, not something the chunking change introduced. It bites hardest exactly
-when enrichment fails, which is when the OpenAI key is missing — i.e. the current Vercel deploy
-if the env vars still aren't set. One-line fix: add `severity_index: 1` (what `clampSeverityIndex`
-returns for unknown). I stopped before applying it.
-
----
-
-## What is NOT built yet
-
-**Backend**
-- `api/index.js` still ignores the query string and the cache is a single object. Needs:
-  `resolveLimit(req.query.limit)`, cache as `Map<limit, {data,timestamp}>`, `lastGood` as
-  `Map<limit, data>`. Import `resolveLimit` from `./rss.js`.
-- `fetchNewsFromRss` still hardcodes `selectArticles(deduped, 12)` at **line 477**. Needs to take
-  `count` from its `deps` argument. `selectArticles(articles, count = 12)` already accepts it.
-
-**Frontend — none of this is started**
-- `OpenapiService.getNews()` takes no argument; needs `getNews(limit)`.
-- No preferences service for the `localStorage` count (suggest key `ainews.count.v1`, mirroring
-  `StarService`'s versioned-envelope + corrupt-JSON-guard pattern).
-- No paginator component. Needs to be shared — dashboard and `/starred` both use it.
-- Dashboard needs the 12/25/50 selector and a "Showing 1–12 of 47" line. That line matters: it is
-  how a supply shortfall becomes visible instead of silent.
-- Interaction with the 60s auto-refresh is undecided in code: changing the count must refetch,
-  changing the page must not.
+Consequence: everything currently renders `severity: Unknown`, `enriched: false`. The degrade path
+handled it cleanly — no crash, and `severity_index: 1` on every item, which is the bug fixed this
+session. **Check the Vercel env vars too** (`OPENAI_API_KEY`, `OPENAI_MODEL`); the deploy has the
+same exposure and nothing in the UI surfaces it.
 
 ---
 
-## Known outstanding issues (unchanged from before)
+## What changed, and why
 
-- **Vercel env vars** `OPENAI_API_KEY` and `OPENAI_MODEL` (`gpt-5.4`) must be set in project
-  settings now that `.env` is excluded by `.vercelignore`. Without them the API still serves real
-  headlines but every item degrades to `severity: 'Unknown'` — and see the `severity_index` bug above.
-- **`package-lock.json` is gitignored and untracked** — Vercel resolves `^17.0.0` fresh, so
-  deployed builds may not match local. Recommended committing it; still undecided.
-- **Backend tests are orphaned.** `server/*.test.js` still import `./rss.js` / `./index.js`, which
-  moved to `api/`. `npm run test:api` scans `api/`, which has no test files. Backend coverage is
-  **zero** — including for the chunking logic I just wrote.
-- Root `node_modules` is missing `dotenv`, `axios`, `rss-parser`. The API will not start locally
-  until `npm install`.
-- `server/node_modules` has ~843 files wrongly tracked — `.gitignore` line 10 is root-anchored
-  `/node_modules`.
-- `GET /api/news` has never been smoke-tested end-to-end against real feeds; cost per refresh
-  unmeasured, and it is about to become up to ~4x larger per refresh at limit=50.
+**CTO review returned CHANGES REQUIRED, not approved.** Six blocking items, five accepted:
+
+1. **Token budget ignored reasoning tokens.** `max_completion_tokens` on gpt-5.x covers reasoning
+   AND output. The `n * 90 + 200` formula left nothing for reasoning, re-creating the exact
+   truncation bug the chunking was written to fix. Now `enrichTokenBudget()` adds a 2000-token
+   `REASONING_ALLOWANCE`.
+2. **Truncation was undiagnosable.** `finish_reason === 'length'` is now detected explicitly and
+   logged with `usage`, instead of surfacing as a generic JSON.parse failure.
+3. **`severity_index` fixed** on the degraded path, plus the matching `star.service.ts` default
+   (was 0, now 1 — a legacy starred item used to sort below a fresh Unknown one).
+6. **In-flight coalescing added** — concurrent misses on one limit now share a single pipeline run
+   instead of each paying for feeds and enrichment.
+11. Dead comma expression in `clampSeverityIndex` removed.
+
+**Diverged on item 4.** The CTO wanted one cache at 50 with narrowing. That contradicts what the
+user was told when they chose server-side `?limit` ("default 12 stays cheap"), and the 1.7x figure
+assumed all three limits are equally exercised — but the count is localStorage-persisted, so a
+browser uses one. Kept the per-limit cache AND built `narrowItems()`, so a warm 50 entry serves 12
+and 25 for free. Strictly better than either proposal, and it solves item 5's cold-start problem
+for free.
+
+**`narrowItems` is the load-bearing piece.** A naive `.slice(0, 12)` on a 50-item result returns
+**3 AI articles instead of 12** — `selectArticles` re-sorts by date after backfilling. Measured,
+not assumed, and there is a test asserting the naive version would be wrong.
+
+---
+
+## Also fixed along the way
+
+- **`normalizeArticle` now prefers `isoDate` over `pubDate`.** rss-parser populates `isoDate` for
+  Atom entries where `pubDate` can be absent; the old code dropped every such item.
+- **`/api/news` no longer leaks raw internal error text** on 500. Two tests were asserting the
+  leak; they now assert its absence.
+- **Backend tests un-orphaned.** Moved `server/*.test.js` + fixtures to a top-level `tests/`, which
+  keeps them out of Vercel's `api/` function detection. `test:api` is now
+  `node --test "tests/**/*.test.js"` — the old `node --test api/` was executing production modules
+  as tests.
+- `X-News-Stale` is now read by the client and suppresses the "of N" count, so a stale 12-item body
+  answering a request for 50 is not misreported as a supply shortfall.
+
+---
+
+## New files
+
+```
+api/                     rss.js (resolveLimit, narrowItems, enrichTokenBudget), index.js (per-limit cache)
+src/app/services/        count.service.ts + spec
+src/app/components/      paginator/ (ts, html, css, spec)
+tests/                   rss.test.js, index.test.js, limits.test.js, fixtures/
+```
+
+---
+
+## Outstanding
+
+- **Nothing is committed.** 18 modified + 5 new paths.
+- **`server/` is now dead** — only `fixtures/` (copied to `tests/`) and ~843 wrongly-tracked
+  `node_modules` files remain. The CTO recommended deleting it. Left alone deliberately: deleting
+  tracked files is the user's call.
+- **`package-lock.json` still gitignored and untracked.** Vercel resolves `^17.0.0` fresh.
+- **Vercel CDN query-string keying is unverified.** Query strings should be part of Vercel's edge
+  cache key and survive the `/api/(.*)` rewrite, but this needs confirming on a preview deploy — if
+  the rewrite drops the query string, every visitor silently gets 12.
+- **No retry on 429/5xx** in `enrichChunk`. Three parallel calls make a burst 429 likelier, and one
+  429 degrades 20 articles. Judged not blocking at this scale.
+- Cost per refresh still unmeasured — blocked on the dead API key.
 
 ---
 
 ## Model note
 
-`gpt-5.4-pro` is **not** a chat model — it 404s on `/v1/chat/completions` and only works on
-`/v1/responses`. Every gpt-5.x model also rejects `max_tokens` in favour of
-`max_completion_tokens`. The code runs `gpt-5.4` via `OPENAI_MODEL`, verified working with
-`temperature` and JSON mode.
+`gpt-5.4-pro` is not a chat model — it 404s on `/v1/chat/completions` and only works on
+`/v1/responses`. Every gpt-5.x model rejects `max_tokens` in favour of `max_completion_tokens`,
+and that budget covers reasoning tokens too. The code runs `gpt-5.4` via `OPENAI_MODEL`.

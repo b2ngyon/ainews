@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0">
+<channel>
+<title>Broken Feed</title>
+<link>https://example-broken-feed.test</link>
+<description>This feed is deliberately malformed for testing.</description>
+<item>
+<title>Unclosed tag article
+<link>https://example-broken-feed.test/articles/one</link>
+<description>This item is inside an unclosed title tag, which should make the whole document fail XML parsing.</description>
+<pubDate>Wed, 29 Jul 2026 10:00:00 +0000</pubDate>
+</item>
+</channel>
+</rss>

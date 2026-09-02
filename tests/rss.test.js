@@ -13,7 +13,13 @@ import {
   selectArticles,
   enrichArticles,
   fetchNewsFromRss,
-} from './rss.js';
+  enrichTokenBudget,
+  narrowItems,
+  resolveLimit,
+  ALLOWED_LIMITS,
+  DEFAULT_LIMIT,
+  ENRICH_CHUNK_SIZE,
+} from '../api/rss.js';
 
 // ---------------------------------------------------------------------------
 // Fixture / stub helpers. NOTHING in this file ever touches the network:
@@ -639,7 +645,7 @@ describe('enrichArticles', () => {
         await enrichArticles(articles, post);
 
         assert.ok(recordedBody, 'post should have been called with a body');
-        assert.equal(recordedBody.max_completion_tokens, 1500);
+        assert.equal(recordedBody.max_completion_tokens, enrichTokenBudget(2));
         assert.equal('max_tokens' in recordedBody, false);
         assert.equal(recordedBody.model, 'gpt-5.4-test-model');
         assert.equal(recordedBody.response_format.type, 'json_object');
